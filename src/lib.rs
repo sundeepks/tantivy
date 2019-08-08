@@ -111,9 +111,6 @@
 #[macro_use]
 extern crate serde_derive;
 
-#[cfg_attr(test, macro_use)]
-extern crate serde_json;
-
 #[macro_use]
 extern crate log;
 
@@ -130,6 +127,9 @@ mod functional_test;
 #[macro_use]
 mod macros;
 
+mod composite_file;
+pub(crate) use composite_file::{CompositeFile, CompositeWrite};
+
 pub use crate::error::TantivyError;
 
 #[deprecated(since = "0.7.0", note = "please use `tantivy::TantivyError` instead")]
@@ -142,22 +142,22 @@ pub type Result<T> = std::result::Result<T, error::TantivyError>;
 /// Tantivy DateTime
 pub type DateTime = chrono::DateTime<chrono::Utc>;
 
-mod common;
+pub use tantivy_common as common;
+pub use tantivy_schema as schema;
+pub use tantivy_tokenizer as tokenizer;
+
 mod core;
 mod indexer;
 
-#[allow(unused_doc_comments)]
-mod error;
-pub mod tokenizer;
-
 pub mod collector;
 pub mod directory;
+#[allow(unused_doc_comments)]
+mod error;
 pub mod fastfield;
 pub mod fieldnorm;
 pub(crate) mod positions;
 pub mod postings;
 pub mod query;
-pub mod schema;
 pub mod space_usage;
 pub mod store;
 pub mod termdict;
