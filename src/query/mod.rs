@@ -26,7 +26,7 @@ mod weight;
 
 #[cfg(test)]
 mod vec_docset;
-
+pub mod custom_query;
 pub(crate) mod score_combiner;
 pub use self::intersection::Intersection;
 pub use self::union::Union;
