@@ -10,8 +10,8 @@ use crate::Result;
 
 
 pub struct CustomTerm {
-    text : String,
-    field : u32
+    pub text : String,
+    pub field : u32
 }
 
 pub trait CustomWeightFunction {
