@@ -18,17 +18,30 @@ pub trait CustomWeightFunction {
     fn get_weight(&self) -> f32;
 }
 
-
 impl CustomWeightFunction for CustomTerm {
     fn get_weight(&self) -> f32 {
-       1.0
+        match (self.text.as_ref(),self.field) {
+            ("DH", 0) => {32.0}
+            ("ALL", 0) => {16.0}
+            ("NON-CHRONO", 1) => {12.0}
+            ("ALL", 1)  => {8.0}
+            ("965", 2) => {4.0}
+            ("ALL", 2) => {2.0}
+            (_,_) => {0.0}
+        }
+
     }
 }
+
 #[derive(Clone, Debug)]
 pub struct CustomTermQuery {
     term: Term,
     index_record_option: IndexRecordOption,
 }
+
+/*fn get_weight<T:CustomWeightFunction>(t : &T) ->f32 {
+    t.get_weight()
+}*/
 
 impl CustomTermQuery {
     /// Creates a new term query.
@@ -57,6 +70,7 @@ impl CustomTermQuery {
         //let mut bm25_weight = BM25Weight::for_terms(searcher, &[term]);
         let bm25_weight = BM25Weight {
             idf_explain: Explanation::new("",0.0),
+           //weight : get_weight()
             weight: CustomTerm {text:term.text().to_string(),field:term.field().0}.get_weight(),
             cache: [0f32; 256],
             average_fieldnorm: 0.0,
