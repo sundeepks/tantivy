@@ -18,6 +18,7 @@ pub trait CustomWeightFunction {
     fn get_weight(&self) -> f32;
 }
 
+
 impl CustomWeightFunction for CustomTerm {
     fn get_weight(&self) -> f32 {
        1.0
