@@ -7,18 +7,23 @@ use crate::query::explanation::does_not_match;
 use crate::postings::SegmentPostings;
 use crate::fieldnorm::FieldNormReader;
 use crate::Result;
+use std::fmt::Debug;
 
-
+/*
+#[derive(Debug, Clone)]
 pub struct CustomTerm {
     pub text : String,
     pub field : u32
 }
+*/
 
-pub trait CustomWeightFunction {
-    fn get_weight(&self) -> f32;
+
+pub trait CustomWeightFunction : Debug + Clone + 'static
+{
+    fn get_weight(&self,text : String, field: u32) -> f32;
 }
 
-impl CustomWeightFunction for CustomTerm {
+/*impl CustomWeightFunction for CustomTerm {
     fn get_weight(&self) -> f32 {
         match (self.text.as_ref(),self.field) {
             ("DH", 0) => {32.0}
@@ -31,24 +36,42 @@ impl CustomWeightFunction for CustomTerm {
         }
 
     }
-}
+}*/
+
+/*impl CustomTerm {
+
+    fn get_weight(&self) -> f32 {
+        match (self.text.as_ref(),self.field) {
+            ("DH", 0) => {32.0}
+            ("ALL", 0) => {16.0}
+            ("NON-CHRONO", 1) => {12.0}
+            ("ALL", 1)  => {8.0}
+            ("965", 2) => {4.0}
+            ("ALL", 2) => {2.0}
+            (_,_) => {0.0}
+        }
+
+    }
+}*/
 
 #[derive(Clone, Debug)]
-pub struct CustomTermQuery {
+pub struct CustomTermQuery<T:CustomWeightFunction> {
     term: Term,
     index_record_option: IndexRecordOption,
+    custom_weight : T
 }
 
 /*fn get_weight<T:CustomWeightFunction>(t : &T) ->f32 {
     t.get_weight()
 }*/
 
-impl CustomTermQuery {
+impl <T:CustomWeightFunction> CustomTermQuery<T> {
     /// Creates a new term query.
-    pub fn new(term: Term, segment_postings_options: IndexRecordOption) -> CustomTermQuery {
-        CustomTermQuery {
+    pub fn new(term: Term, segment_postings_options: IndexRecordOption,custom_weight:T ) ->CustomTermQuery<T> {
+      CustomTermQuery {
             term,
             index_record_option: segment_postings_options,
+            custom_weight
         }
     }
 
@@ -70,8 +93,9 @@ impl CustomTermQuery {
         //let mut bm25_weight = BM25Weight::for_terms(searcher, &[term]);
         let bm25_weight = BM25Weight {
             idf_explain: Explanation::new("",0.0),
-           //weight : get_weight()
-            weight: CustomTerm {text:term.text().to_string(),field:term.field().0}.get_weight(),
+            //text:term.text().to_string(),field:term.field().0
+            weight :self.custom_weight.get_weight(term.text().to_string(),term.field().0),
+            //weight: CustomTerm {text:term.text().to_string(),field:term.field().0}.get_weight(),
             cache: [0f32; 256],
             average_fieldnorm: 0.0,
         };
@@ -84,7 +108,7 @@ impl CustomTermQuery {
     }
 }
 
-impl Query for CustomTermQuery {
+impl <T:CustomWeightFunction> Query for CustomTermQuery<T> {
     fn weight(&self, searcher: &Searcher, scoring_enabled: bool) -> Result<Box<dyn Weight>> {
         Ok(Box::new(self.specialized_weight(searcher, scoring_enabled)))
     }
